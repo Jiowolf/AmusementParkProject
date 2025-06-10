@@ -1,12 +1,13 @@
-﻿using AmusementPark.Models;
+﻿using AmusementPark.Data;
+using AmusementPark.Models;
 using AmusementPark.Services;
 using AmusementPark.Utils;
 using Microsoft.Data.Sqlite;
 using Spectre.Console;
 using Spectre.Console.Extensions;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using AmusementPark.Data;
 
 namespace AmusementPark
 {
@@ -17,7 +18,7 @@ namespace AmusementPark
             // Make emoji's works on terminal
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            // Create Database or initialise it 
+            // Create Database or initialise it if it not exists
             await DataAccess.InitializeDatabaseAsync();
 
             // instantie ParkRepository
@@ -58,16 +59,11 @@ namespace AmusementPark
                     ?? throw new Exception("Error when charging the park.");
             }
 
-            // Create databBase 
-
-            await DataAccess.InitializeDatabaseAsync();
-
             // Clear the console
             Console.Clear();
 
             // create var to stop the refresh when we are in a prompt
             bool inMenu = false;
-            var cancelToken = new CancellationTokenSource();
 
             // create the back loop to generate visitors and money and display each 
             _ = Task.Run(async () =>
@@ -89,11 +85,11 @@ namespace AmusementPark
             // initialise the user's choice
             string choice = string.Empty;
 
-            while (choice != "6")
+            while (choice != "7")
             {
                 // Ask user to make a choice of what he wants to do 
                 choice = Menu.DisplayMenu().Substring(0, 1);
-
+                inMenu = false;
                 // Chekc if the user's budget is not too low if it is he lost the game ! 
                 if (YourPark.Budget < -5000)
                 {
@@ -119,7 +115,7 @@ namespace AmusementPark
                         break;
                     case "4":
                         inMenu = true;
-                        YourPark.BuyBuilding(ParkService.BuySomeBuilding());
+                        YourPark.BuyBuilding(ParkService.BuySomeBuilding(YourPark));
                         inMenu = false;
                         break;
                     case "5":
@@ -128,11 +124,11 @@ namespace AmusementPark
                         inMenu = false;
                         break;
                     case "6":
-                        AnsiConsole.Markup("[darkred]You exit the game. Thank you ![/]");
+                        inMenu = true;
+                        ParkService.DisplayPopularityAttraction(YourPark);
                         break;
                     case "7":
-                        ParkService.DisplayPopularityAttraction(YourPark);
-                        //AnsiConsole.MarkupLine($"{YourPark.PlacedBuilding[0].VisitorInAttraction}");
+                        AnsiConsole.Markup("[darkred]You exit the game. Thank you ![/]");
                         break;
                     default:
                         AnsiConsole.Markup("[red]You entered a wrong input please choose a number in the menu.[/]");
